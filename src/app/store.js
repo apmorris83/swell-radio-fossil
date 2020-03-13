@@ -1,8 +1,10 @@
 import { configureStore } from '@reduxjs/toolkit';
 import authReducer from '../features/auth/authSlice';
+import spendsReducer from '../features/spends/spendsSlice';
 
 export default configureStore({
   reducer: {
-    auth: authReducer
+    auth: authReducer,
+    spends: spendsReducer
   }
 });

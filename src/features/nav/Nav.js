@@ -3,7 +3,7 @@ import { Menu } from 'semantic-ui-react';
 import { useLocation, useHistory } from 'react-router-dom';
 
 const menuItems = [
-  { title: 'View', path: '/view', position: 'left' },
+  { title: 'Spends', path: '/spends', position: 'left' },
   { title: 'History', path: '/history', position: 'right' }
 ];
 

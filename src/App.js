@@ -11,7 +11,7 @@ import { useSelector } from 'react-redux';
 
 import Nav from './features/nav/Nav.js';
 import Auth from './features/auth/Auth.js';
-import View from './features/view/View.js';
+import Spends from './features/spends/Spends.js';
 import History from './features/history/History.js';
 import { selectAuthenticated } from './features/auth/authSlice.js';
 
@@ -39,8 +39,8 @@ function App() {
           <Route exact path='/'>
             <Auth />
           </Route>
-          <AuthenticatedRoute path='/view'>
-            <View />
+          <AuthenticatedRoute path='/spends'>
+            <Spends />
           </AuthenticatedRoute>
           <AuthenticatedRoute path='/history'>
             <History />

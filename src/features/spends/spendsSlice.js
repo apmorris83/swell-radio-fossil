@@ -1,4 +1,5 @@
 import { createSlice } from '@reduxjs/toolkit';
+import firebase from '../../firebase.js';
 
 export const slice = createSlice({
   name: 'view',
@@ -63,12 +64,22 @@ export const {
   fetchedData
 } = slice.actions;
 
-export const fetchSpends = selected => dispatch => {
-  dispatch(fetchingData());
-  setTimeout(() => {
-    console.log('fetch data with this query: ', selected);
-    dispatch(fetchedData());
-  }, 1000);
+export const fetchSpends = selected => async dispatch => {
+  try {
+    // first check the user is authenticated, think firestore will need the uid
+    await firebase.auth().onAuthStateChanged(user => {
+      if (user) {
+        console.log({ user });
+        dispatch(fetchingData());
+        setTimeout(() => {
+          console.log('fetch data with this query: ', selected);
+          dispatch(fetchedData());
+        }, 1000);
+      } else dispatch(fetchedData());
+    });
+  } catch (error) {
+    console.log(error);
+  }
 };
 
 export default slice.reducer;

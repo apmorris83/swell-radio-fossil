@@ -19,7 +19,7 @@ const Spends = ({
 }) => {
   useEffect(() => {
     // need to fetch the available sections here first
-    dispatch(fetchSpends(selected));
+    dispatch(fetchSpends(selected)); // this will just query the database with section, year and month
   }, [selected]);
   const dispatch = useDispatch();
   return (

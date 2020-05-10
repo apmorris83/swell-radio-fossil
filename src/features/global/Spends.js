@@ -2,26 +2,16 @@ import React, { useEffect, Fragment } from 'react';
 import { Segment, Form, Grid, Loader } from 'semantic-ui-react';
 import { useDispatch, connect } from 'react-redux';
 
-import {
-  selectYear,
-  selectMonth,
-  selectSection,
-  fetchSpends
-} from './spendsSlice.js';
+import { loadSpends, selectMonth, selectYear, selectSection } from './globalSlice.js';
 
-const Spends = ({
-  years,
-  months,
-  sections,
-  selected,
-  fetchingSpends,
-  data
-}) => {
-  useEffect(() => {
-    // need to fetch the available sections here first
-    dispatch(fetchSpends(selected)); // this will just query the database with section, year and month
-  }, [selected]);
+const Spends = ({ years, months, sections, spends }) => {
+  const { selected } = spends;
   const dispatch = useDispatch();
+
+  useEffect(() => {
+    dispatch(loadSpends(selected));
+  }, [selected]);
+
   return (
     <Fragment>
       <Segment>
@@ -29,15 +19,7 @@ const Spends = ({
           <Grid columns='equal'>
             <Grid.Row>
               <Grid.Column>
-                <Form.Dropdown
-                  selection
-                  fluid
-                  name='year'
-                  label='Year'
-                  value={selected.year}
-                  options={years}
-                  onChange={(e, { value }) => dispatch(selectYear(value))}
-                />
+                <Form.Dropdown selection fluid name='year' label='Year' value={selected.year} options={years} onChange={(e, { value }) => dispatch(selectYear({ year: value, page: 'spends' }))} />
               </Grid.Column>
               <Grid.Column>
                 <Form.Dropdown
@@ -47,7 +29,7 @@ const Spends = ({
                   label='Month'
                   value={selected.month}
                   options={months}
-                  onChange={(e, { value }) => dispatch(selectMonth(value))}
+                  onChange={(e, { value }) => dispatch(selectMonth({ month: value, page: 'spends' }))}
                 />
               </Grid.Column>
             </Grid.Row>
@@ -62,22 +44,22 @@ const Spends = ({
                   placeholder='Choose some sections'
                   value={selected.sections}
                   options={sections}
-                  onChange={(e, { value }) => dispatch(selectSection(value))}
+                  onChange={(e, { value }) => dispatch(selectSection({ section: value, page: 'spends' }))}
                 />
               </Grid.Column>
             </Grid.Row>
           </Grid>
         </Form>
       </Segment>
-      {fetchingSpends ? <Loader active inline='centered' /> : null}
-      {data ? <h1>got some data</h1> : null}
+      {/* {fetchingSpends ? <Loader active inline='centered' /> : null}
+      {data ? <h1>got some data</h1> : null} */}
     </Fragment>
   );
 };
 
-const mapStateToProps = state => {
+const mapStateToProps = (state) => {
   return {
-    ...state.spends
+    ...state.global,
   };
 };
 

@@ -5,27 +5,27 @@ export const slice = createSlice({
   name: 'auth',
   initialState: {
     authenticated: false,
-    error: false
+    error: false,
   },
   reducers: {
-    loginSuccess: state => {
+    loginSuccess: (state) => {
       state.authenticated = true;
     },
-    logout: state => {
+    logout: (state) => {
       state.authenticated = false;
     },
     loginError: (state, action) => {
       state.error = action.payload;
     },
-    clearError: state => {
+    clearError: (state) => {
       state.error = false;
-    }
-  }
+    },
+  },
 });
 
 export const { loginSuccess, loginError, clearError } = slice.actions;
 
-export const authenticateUser = (email, password) => async dispatch => {
+export const authenticateUser = (email, password) => async (dispatch) => {
   try {
     dispatch(clearError());
     await firebase.auth().signInWithEmailAndPassword(email, password);
@@ -35,6 +35,6 @@ export const authenticateUser = (email, password) => async dispatch => {
   }
 };
 
-export const selectAuthenticated = state => state.auth.authenticated;
+export const selectAuthenticated = (state) => state.auth.authenticated;
 
 export default slice.reducer;

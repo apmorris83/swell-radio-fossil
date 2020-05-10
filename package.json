@@ -2,6 +2,11 @@
   "name": "swell-radio-fossil",
   "version": "0.1.0",
   "private": true,
+  "prettier": {
+    "singleQuote": true,
+    "jsxSingleQuote": true,
+    "printWidth": 200
+  },
   "dependencies": {
     "@reduxjs/toolkit": "^1.2.5",
     "@testing-library/jest-dom": "^4.2.4",

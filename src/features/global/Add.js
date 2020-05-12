@@ -35,7 +35,7 @@ const Add = ({ showAdd, authenticated, form, months, sections, rows, add }) => {
               <Label basic>£</Label>
               <input />
             </Form.Input>
-            <Form.TextArea name='note' label='Note' value={selected.note} onChange={(e, { value }) => dispatch(updateNote(value))} />
+            <Form.Input name='note' label='Note' value={selected.note} onChange={(e, { value }) => dispatch(updateNote(value))} />
             <Form.Field>
               <Button type='submit' fluid positive content='Submit' />
             </Form.Field>

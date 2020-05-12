@@ -94,6 +94,10 @@ export const slice = createSlice({
         return a.month === b.month ? b.created - a.created : a.month > b.month ? 1 : -1;
       });
     },
+    clearAdd: (state) => {
+      state.add.selected.amount = '';
+      state.add.selected.note = '';
+    },
   },
 });
 
@@ -111,6 +115,7 @@ export const {
   updateAmount,
   updateNote,
   fetchHistoryEntries,
+  clearAdd,
 } = slice.actions;
 
 export const loadHistory = (selected) => async (dispatch, getState) => {
@@ -240,6 +245,7 @@ export const addSpend = (location) => async (dispatch, getState) => {
     firestoreEntries.add(data).then(() => {
       dispatch(toggleShowAdd());
       dispatch(fetchingHistoryEntries(data));
+      dispatch(clearAdd());
       // if (location === '/history') dispatch(onFetchHistory()); // fetch history again
       // dispatch(loaded());
     });

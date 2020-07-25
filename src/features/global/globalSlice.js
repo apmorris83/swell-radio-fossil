@@ -22,6 +22,8 @@ export const slice = createSlice({
         sections: [],
       },
       entries: [],
+      pageTotal: 0,
+      pageAverage: 0,
     },
     history: {
       selected: {
@@ -93,6 +95,12 @@ export const slice = createSlice({
       state.history.entries = action.payload.sort((a, b) => {
         return a.month === b.month ? b.created - a.created : a.month > b.month ? 1 : -1;
       });
+      state.history.pageTotal = action.payload.reduce((acc, cur) => acc + cur.amount, 0);
+    },
+    fetchSpendEntries: (state, action) => {
+      state.spends.entries = action.payload;
+      state.spends.pageTotal = action.payload.reduce((acc, cur) => acc + cur.total, 0);
+      state.spends.pageAverage = action.payload.reduce((acc, cur) => acc + cur.average, 0);
     },
     clearAdd: (state) => {
       state.add.selected.amount = '';
@@ -115,6 +123,7 @@ export const {
   updateAmount,
   updateNote,
   fetchHistoryEntries,
+  fetchSpendEntries,
   clearAdd,
 } = slice.actions;
 
@@ -138,7 +147,7 @@ export const loadHistory = (selected) => async (dispatch, getState) => {
       console.log(error);
     }
   }
-  if (selected.month && selected.year && selected.section && selected.row) dispatch(fetchingHistoryEntries(selected));
+  if (selected.month !== null && selected.year && selected.section && selected.row) dispatch(fetchingHistoryEntries(selected));
 };
 
 export const loadSpends = (selected) => async (dispatch, getState) => {
@@ -156,12 +165,12 @@ export const loadSpends = (selected) => async (dispatch, getState) => {
           return sections[0].value;
         });
       dispatch(selectingSection({ section: selectedSection, page: 'spends' }));
-      if (!getState().global.add.selected.section) dispatch(selectingSection({ section: selectedSection, page: 'add' }));
+      if (!getState().global.add.selected.section) dispatch(selectingSection({ section: selectedSection, page: 'add' })); // fetch section/row for Add
     } catch (error) {
       console.log(error);
     }
   }
-  if (selected.month && selected.year && selected.sections) dispatch(fetchingSpendsEntries(selected));
+  if (selected.month !== null && selected.year) dispatch(fetchingSpendsEntries(selected));
 };
 
 export const loadAdd = (selected) => async (dispatch) => {
@@ -219,12 +228,14 @@ export const selectingSection = (selected) => async (dispatch) => {
       .get()
       .then((data) => {
         let rows = [];
-        data.forEach((doc) => rows.push({ text: doc.data().title, value: doc.id }));
-        dispatch(fetchRows({ page: selected.page, rows: rows }));
-        return rows[0].value;
+        if (selected.page !== 'spends') {
+          data.forEach((doc) => rows.push({ text: doc.data().title, value: doc.id }));
+          dispatch(fetchRows({ page: selected.page, rows: rows }));
+          return rows[0].value;
+        }
       });
     dispatch(selectSection({ page: selected.page, section: selected.page === 'spends' ? [selected.section] : selected.section })); // 'spends'
-    dispatch(selectRow({ page: selected.page, row: selectedRow })); // not needed for spends
+    if (selected.page !== 'spends') dispatch(selectRow({ page: selected.page, row: selectedRow })); // not needed for spends
   } catch (error) {
     console.log(error);
   }
@@ -271,24 +282,66 @@ export const fetchingHistoryEntries = (selected) => async (dispatch) => {
   }
 };
 
-export const fetchingSpendsEntries = (selected) => async (dispatch) => {
-  // selected.sections
-  // need to map over these and fetch all data for each section
-  try {
-    const query =
+export const fetchingSpendsEntries = (selected) => async (dispatch, getState) => {
+  const { sections } = getState().global;
+
+  const getAsyncSpendData = async (ID) => {
+    const entriesQuery =
       selected.month === 'all'
-        ? firestoreEntries.where('year', '==', selected.year).where('section', '==', selected.section)
-        : firestoreEntries.where('year', '==', selected.year).where('month', '==', selected.month).where('section', '==', selected.section);
-    await query.get().then((data) => {
-      let entries = [];
-      data.forEach((doc) => entries.push({ ...doc.data() }));
-      dispatch(fetchHistoryEntries(entries));
+        ? firestoreEntries.where('year', '==', selected.year).where('section', '==', ID)
+        : firestoreEntries.where('year', '==', selected.year).where('month', '==', selected.month).where('section', '==', ID);
+
+    const sectionTotal = await entriesQuery.get().then((data) => {
+      let sectionAmount = [];
+      data.forEach((doc) => sectionAmount.push(doc.data().amount));
+      return sectionAmount.reduce((a, b) => a + b, 0);
     });
-  } catch (error) {
-    console.log(error);
-  }
+
+    const sectionRows = await firestoreRows // get the rows and totals
+      .where('section', '==', ID)
+      .get()
+      .then((data) => {
+        let rows = [];
+        data.forEach((doc) => rows.push({ text: doc.data().title, value: doc.id }));
+
+        const getAsyncRowData = async (row) => {
+          const entriesQuery =
+            selected.month === 'all'
+              ? firestoreEntries.where('year', '==', selected.year).where('row', '==', row.value)
+              : firestoreEntries.where('year', '==', selected.year).where('month', '==', selected.month).where('row', '==', row.value);
+          return await entriesQuery.get().then((data) => {
+            let rowAmount = [];
+            data.forEach((doc) => rowAmount.push(doc.data().amount));
+            const rowTotal = rowAmount.reduce((a, b) => a + b, 0);
+            return {
+              text: row.text,
+              total: rowTotal,
+              average: rowTotal / 12,
+            };
+          });
+        };
+
+        const getRowData = () => Promise.all(rows.map((row) => getAsyncRowData(row))); // async map to get the row totals
+        const rowTotal = getRowData().then((data) => data); // wait for Promise.all to resolve
+        return rowTotal;
+      });
+    return {
+      text: sections.find((s) => s.value === ID).text,
+      total: sectionTotal,
+      average: sectionTotal / 12,
+      rows: sectionRows,
+    };
+  };
+
+  const getSpendsData = () => Promise.all(selected.sections.map((sectionID) => getAsyncSpendData(sectionID))); // wait for all async stuff to resolve
+  getSpendsData().then((data) => dispatch(fetchSpendEntries(data))); // wait for Promise.all to resolve;
 };
 
 export const selectShowAdd = (state) => state.add.showAdd;
 
 export default slice.reducer;
+
+/*
+TODO edit entry
+TODO delete entry
+ */

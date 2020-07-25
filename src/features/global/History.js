@@ -3,6 +3,7 @@ import { useDispatch, connect } from 'react-redux';
 import { Segment, Form, Grid, Table, Loader } from 'semantic-ui-react';
 
 import { loadHistory, selectMonth, selectYear, selectingSection, selectRow } from './globalSlice.js';
+import Total from './Total.js';
 
 const History = ({ years, months, sections, history, loading }) => {
   const { selected, entries } = history;
@@ -14,6 +15,10 @@ const History = ({ years, months, sections, history, loading }) => {
 
   const renderDate = (month) => {
     return months[month + 1].text; // account for 'All' option at 0
+  };
+
+  const renderAmount = (amount) => {
+    return `£${amount.toLocaleString('en-GB', { minimumFractionDigits: 2 })}`;
   };
 
   return (
@@ -68,32 +73,35 @@ const History = ({ years, months, sections, history, loading }) => {
       </Segment>
       {/* {loading ? <Loader active inline='centered' /> : null} */}
       {entries.length ? (
-        <Table unstackable compact basic>
-          <Table.Header>
-            <Table.Row>
-              <Table.HeaderCell>Note</Table.HeaderCell>
-              <Table.HeaderCell textAlign='right' width={2}>
-                Amount
-              </Table.HeaderCell>
-              <Table.HeaderCell textAlign='right' width={2}>
-                Month
-              </Table.HeaderCell>
-            </Table.Row>
-          </Table.Header>
-          <Table.Body>
-            {entries.map((ent, i) => (
-              <Table.Row key={i}>
-                <Table.Cell>{ent.note}</Table.Cell>
-                <Table.Cell textAlign='right' width={2}>
-                  {`£${ent.amount.toFixed(2)}`}
-                </Table.Cell>
-                <Table.Cell textAlign='right' width={2}>
-                  {renderDate(ent.month)}
-                </Table.Cell>
+        <Fragment>
+          <Table unstackable compact basic>
+            <Table.Header>
+              <Table.Row>
+                <Table.HeaderCell>Note</Table.HeaderCell>
+                <Table.HeaderCell textAlign='right' width={2}>
+                  Month
+                </Table.HeaderCell>
+                <Table.HeaderCell textAlign='right' width={2}>
+                  Amount
+                </Table.HeaderCell>
               </Table.Row>
-            ))}
-          </Table.Body>
-        </Table>
+            </Table.Header>
+            <Table.Body>
+              {entries.map((ent, i) => (
+                <Table.Row key={i}>
+                  <Table.Cell>{ent.note}</Table.Cell>
+                  <Table.Cell textAlign='right' width={2}>
+                    {renderDate(ent.month)}
+                  </Table.Cell>
+                  <Table.Cell textAlign='right' width={2}>
+                    {renderAmount(ent.amount)}
+                  </Table.Cell>
+                </Table.Row>
+              ))}
+            </Table.Body>
+          </Table>
+          <Total page={'history'} total={renderAmount(history.pageTotal)} />
+        </Fragment>
       ) : (
         <Loader active={loading} inline='centered' />
       )}

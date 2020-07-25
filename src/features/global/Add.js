@@ -20,7 +20,15 @@ const Add = ({ showAdd, authenticated, form, months, sections, rows, add }) => {
       <Modal open={showAdd} onClose={() => dispatch(toggleShowAdd())}>
         <Modal.Content>
           <Form onSubmit={() => dispatch(addSpend(location.pathname))}>
-            <Form.Dropdown selection fluid name='month' label='Month' value={selected.month} options={months} onChange={(e, { value }) => dispatch(selectMonth({ month: value, page: 'add' }))} />
+            <Form.Dropdown
+              selection
+              fluid
+              name='month'
+              label='Month'
+              value={selected.month}
+              options={months.filter((month) => month.text !== 'All')}
+              onChange={(e, { value }) => dispatch(selectMonth({ month: value, page: 'add' }))}
+            />
             <Form.Dropdown
               selection
               fluid

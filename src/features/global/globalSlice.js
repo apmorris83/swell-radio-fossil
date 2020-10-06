@@ -44,10 +44,23 @@ export const slice = createSlice({
         note: '',
       },
     },
+    edit: {
+      showEdit: false,
+      selected: {},
+    },
+    notify: {
+      active: false,
+      type: '',
+      message: '',
+    },
   },
   reducers: {
     toggleShowAdd: (state) => {
       state.showAdd = !state.showAdd;
+    },
+    toggleShowEdit: (state, action) => {
+      state.edit.showEdit = !state.edit.showEdit;
+      action.payload ? (state.edit.selected = action.payload) : (state.edit.selected = {});
     },
     loading: (state) => {
       state.loading = true;
@@ -86,10 +99,10 @@ export const slice = createSlice({
       state[action.payload.page].selected.month = action.payload.month;
     },
     updateAmount: (state, action) => {
-      state.add.selected.amount = action.payload;
+      state[action.payload.modal].selected.amount = action.payload.amount;
     },
     updateNote: (state, action) => {
-      state.add.selected.note = action.payload;
+      state[action.payload.modal].selected.note = action.payload.note;
     },
     fetchHistoryEntries: (state, action) => {
       state.history.entries = action.payload.sort((a, b) => {
@@ -106,11 +119,18 @@ export const slice = createSlice({
       state.add.selected.amount = '';
       state.add.selected.note = '';
     },
+    setNotify: (state, action) => {
+      state.notify = { active: true, ...action.payload };
+    },
+    clearNotify: (state) => {
+      state.notify = { active: false };
+    },
   },
 });
 
 export const {
   toggleShowAdd,
+  toggleShowEdit,
   loading,
   fetchMonths,
   fetchYears,
@@ -125,6 +145,8 @@ export const {
   fetchHistoryEntries,
   fetchSpendEntries,
   clearAdd,
+  setNotify,
+  clearNotify,
 } = slice.actions;
 
 export const loadHistory = (selected) => async (dispatch, getState) => {
@@ -253,16 +275,70 @@ export const addSpend = (location) => async (dispatch, getState) => {
     year: new Date().getFullYear(),
   };
   try {
-    firestoreEntries.add(data).then(() => {
-      dispatch(toggleShowAdd());
-      dispatch(fetchingHistoryEntries(data));
-      dispatch(clearAdd());
-      // if (location === '/history') dispatch(onFetchHistory()); // fetch history again
-      // dispatch(loaded());
-    });
+    firestoreEntries
+      .add(data)
+      .then(() => {
+        dispatch(toggleShowAdd());
+        dispatch(fetchingHistoryEntries(data));
+        dispatch(clearAdd());
+        dispatch(setNotify({ type: 'success', message: `Your successfully added ${data.note}.` }));
+        // if (location === '/history') dispatch(onFetchHistory()); // fetch history again
+        // dispatch(loaded());
+      })
+      .catch(() => {
+        dispatch(toggleShowAdd());
+        dispatch(setNotify({ type: 'error', message: `There was a problem, please try again` }));
+      });
   } catch (error) {
     console.log(error);
     // dispatch(loaded());
+  }
+};
+
+export const editEntry = () => async (dispatch, getState) => {
+  const { selected } = getState().global.edit;
+  const currentSelectedHistory = getState().global.history.selected;
+  const data = {
+    amount: Number(selected.amount),
+    month: selected.month,
+    note: selected.note,
+  };
+  try {
+    firestoreEntries
+      .doc(selected.docID)
+      .update(data)
+      .then(() => {
+        dispatch(toggleShowEdit());
+        dispatch(fetchingHistoryEntries(currentSelectedHistory));
+        dispatch(setNotify({ type: 'success', message: `You successfully edited ${data.note}.` }));
+      })
+      .catch(() => {
+        dispatch(toggleShowEdit());
+        dispatch(setNotify({ type: 'error', message: `There was a problem, please try again` }));
+      });
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+export const deleteEntry = () => async (dispatch, getState) => {
+  const { selected } = getState().global.edit;
+  const currentSelectedHistory = getState().global.history.selected;
+  try {
+    firestoreEntries
+      .doc(selected.docID)
+      .delete()
+      .then(() => {
+        dispatch(toggleShowEdit());
+        dispatch(fetchingHistoryEntries(currentSelectedHistory));
+        dispatch(setNotify({ type: 'success', message: `You successfully deleted ${selected.note}.` }));
+      })
+      .catch(() => {
+        dispatch(toggleShowEdit());
+        dispatch(setNotify({ type: 'error', message: `There was a problem, please try again` }));
+      });
+  } catch (error) {
+    console.log(error);
   }
 };
 
@@ -272,11 +348,16 @@ export const fetchingHistoryEntries = (selected) => async (dispatch) => {
       selected.month === 'all'
         ? firestoreEntries.where('year', '==', selected.year).where('section', '==', selected.section).where('row', '==', selected.row)
         : firestoreEntries.where('year', '==', selected.year).where('month', '==', selected.month).where('section', '==', selected.section).where('row', '==', selected.row);
-    await query.get().then((data) => {
-      let entries = [];
-      data.forEach((doc) => entries.push({ ...doc.data() }));
-      dispatch(fetchHistoryEntries(entries));
-    });
+    await query
+      .get()
+      .then((data) => {
+        let entries = [];
+        data.forEach((doc) => entries.push({ ...doc.data(), docID: doc.id }));
+        dispatch(fetchHistoryEntries(entries));
+      })
+      .catch(() => {
+        dispatch(setNotify({ type: 'error', message: `There was a problem, please try again` }));
+      });
   } catch (error) {
     console.log(error);
   }

@@ -2,8 +2,9 @@ import React, { Fragment, useEffect } from 'react';
 import { useDispatch, connect } from 'react-redux';
 import { Segment, Form, Grid, Table, Loader } from 'semantic-ui-react';
 
-import { loadHistory, selectMonth, selectYear, selectingSection, selectRow } from './globalSlice.js';
+import { loadHistory, selectMonth, selectYear, selectingSection, selectRow, toggleShowEdit } from './globalSlice.js';
 import Total from './Total.js';
+import Edit from './Edit.js';
 
 const History = ({ years, months, sections, history, loading }) => {
   const { selected, entries } = history;
@@ -74,7 +75,7 @@ const History = ({ years, months, sections, history, loading }) => {
       {/* {loading ? <Loader active inline='centered' /> : null} */}
       {entries.length ? (
         <Fragment>
-          <Table unstackable compact basic>
+          <Table unstackable compact basic selectable>
             <Table.Header>
               <Table.Row>
                 <Table.HeaderCell>Note</Table.HeaderCell>
@@ -88,7 +89,7 @@ const History = ({ years, months, sections, history, loading }) => {
             </Table.Header>
             <Table.Body>
               {entries.map((ent, i) => (
-                <Table.Row key={i}>
+                <Table.Row key={i} onClick={() => dispatch(toggleShowEdit(ent))}>
                   <Table.Cell>{ent.note}</Table.Cell>
                   <Table.Cell textAlign='right' width={2}>
                     {renderDate(ent.month)}
@@ -101,6 +102,7 @@ const History = ({ years, months, sections, history, loading }) => {
             </Table.Body>
           </Table>
           <Total page={'history'} total={renderAmount(history.pageTotal)} />
+          <Edit />
         </Fragment>
       ) : (
         <Loader active={loading} inline='centered' />

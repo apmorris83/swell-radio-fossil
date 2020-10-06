@@ -39,11 +39,21 @@ const Add = ({ showAdd, authenticated, form, months, sections, rows, add }) => {
               onChange={(e, { value }) => dispatch(selectingSection({ section: value, page: 'add' }))}
             />
             <Form.Dropdown selection fluid name='row' label='Row' value={selected.row} options={selected.rows} onChange={(e, { value }) => dispatch(selectRow({ row: value, page: 'add' }))} />
-            <Form.Input fluid name='amount' label='Amount' type='text' labelPosition='left' value={selected.amount} onChange={(e, { value }) => dispatch(updateAmount(value))}>
+            <Form.Input
+              fluid
+              name='amount'
+              label='Amount'
+              type='number'
+              min='0'
+              step='any'
+              labelPosition='left'
+              value={selected.amount}
+              onChange={(e, { value }) => dispatch(updateAmount({ amount: value, modal: 'add' }))}
+            >
               <Label basic>£</Label>
               <input />
             </Form.Input>
-            <Form.Input name='note' label='Note' value={selected.note} onChange={(e, { value }) => dispatch(updateNote(value))} />
+            <Form.Input name='note' label='Note' value={selected.note} onChange={(e, { value }) => dispatch(updateNote({ note: value, modal: 'add' }))} />
             <Form.Field>
               <Button type='submit' fluid positive content='Submit' />
             </Form.Field>

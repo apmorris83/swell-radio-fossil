@@ -9,6 +9,7 @@ import Add from './features/global/Add.js';
 import Auth from './features/auth/Auth.js';
 import Spends from './features/global/Spends.js';
 import History from './features/global/History.js';
+import Notify from './features/global/Notify.js';
 import { selectAuthenticated } from './features/auth/authSlice.js';
 
 function App() {
@@ -20,6 +21,7 @@ function App() {
     <Container style={{ marginBottom: '60px' }}>
       <Router>
         <Nav />
+        <Notify />
         <Switch>
           <Route exact path='/'>
             <Auth />

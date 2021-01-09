@@ -20,20 +20,8 @@ const Auth = ({ error }) => {
   const onChange = (e, { name, value }) => setForm({ ...form, [name]: value });
   return (
     <Form onSubmit={onSubmit} error={!!error}>
-      <Form.Input
-        name='email'
-        label='Email'
-        type='email'
-        value={form.email}
-        onChange={onChange}
-      />
-      <Form.Input
-        name='password'
-        label='Password'
-        type='password'
-        value={form.password}
-        onChange={onChange}
-      />
+      <Form.Input name='email' label='Email' type='email' value={form.email} onChange={onChange} />
+      <Form.Input name='password' label='Password' type='password' value={form.password} onChange={onChange} />
       <Message error header='Error' content={error} />
       <Form.Field>
         <Button type='submit' fluid positive content='Login' />
@@ -42,9 +30,9 @@ const Auth = ({ error }) => {
   );
 };
 
-const mapStateToProps = state => {
+const mapStateToProps = (state) => {
   return {
-    ...state.auth
+    ...state.auth,
   };
 };
 
